@@ -1,0 +1,21 @@
+# Ignore Python bytecode and cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Ignore virtual environment
+venv/
+
+# Ignore VSCode workspace settings
+.vscode/
+
+# macOS Finder files
+.DS_Store
+
+# Ignore build artifacts (if any C++ code is compiled)
+*.o
+*.out
+*.exe
+
+# If you want to ignore system config files, you can include more,
+# but this covers most typical Python/VS Code/macOS patterns.
