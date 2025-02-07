@@ -9,14 +9,16 @@ def fixed_point_iteration(g):
     for k in range(100):
         x_next = g(xk)
         difference = abs(x_next - xk)
+        print(f"iter {k}: Xk = {xk}, Xk+1 = {x_next}, difference = {difference}")
 
         if difference <= eps:
-            print(f"itera {k}: Xk = {xk}, Xk+1 = {x_next}, difference = {difference}")
+            print(f"Result: iter {k}: Xk = {xk}, Xk+1 = {x_next}, difference = {difference}")
             break
 
         xk = x_next
 
-fixed_point_iteration(lambda x: (-1 * (x**2 - x - 2) / 6) + x)
-fixed_point_iteration(lambda x: (x + 2) / 2)
-fixed_point_iteration(lambda x: math.sqrt(x + 2)) # x^2 - x - 2 = (x-2)(x+1) -> root is 2 or -1
+alpha = 1/10
+fixed_point_iteration(lambda x: (-1 * (x**2 - x - 2) * alpha) + x)
+# fixed_point_iteration(lambda x: (x + 2) / 2)
+# fixed_point_iteration(lambda x: math.sqrt(x + 2)) # x^2 - x - 2 = (x-2)(x+1) -> root is 2 or -1
 # fixed_point_iteration(lambda x: x**2 - 2)
