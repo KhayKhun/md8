@@ -21,27 +21,43 @@ for row in A:
     print(row)
 print("Initial RHS vector b:", rhs_vector)
 
-# Step: 1
-for k in range(N): # K for col
+# Step 1: elimination
+for k in range(N):
     if A[k][k] == 0:
-        for r in range(k+1, N):
+        for r in range(k + 1, N):
             if A[r][k] != 0:
-                A[k], A[r] = A[r], A[k]  # Swap entire rows in A
-                rhs_vector[k], rhs_vector[r] = rhs_vector[r], rhs_vector[k]  # Swap corresponding entries in rhs_vector
+                # swap entire rows in A
+                A[k], A[r] = A[r], A[k]
+                # swap corresponding entries in b
+                rhs_vector[k], rhs_vector[r] = rhs_vector[r], rhs_vector[k]
                 break
     
     pivot = A[k][k]
-    # If pivot is still zero (e.g., all below were zero), we won't proceed further in that column
     if pivot == 0:
         continue
     
-    for i in range(k+1, N): # i for row
+    for i in range(k+1, N):
         factor = A[i][k] / pivot
-        for j in range(k, N): # j for col
+        for j in range(k, N):
             A[i][j] = A[i][j] - factor * A[k][j]
-        rhs_vector[i] = rhs_vector[i] - factor * rhs_vector[k]
+        rhs_vector[i] -= factor * rhs_vector[k]
     
     print(f"\nAfter eliminating column {k}:")
     for row in A:
         print([x for x in row])
-    print("b:", [x for x in rhs_vector])
+    print("rhs:", [x for x in rhs_vector])
+
+# Step 3: backward substitution
+x_solution = [0 for _ in range(N)]
+for row_index in reversed(range(N)):
+    sum_ax = 0
+    for col_index in range(row_index + 1, N):
+        sum_ax += A[row_index][col_index] * x_solution[col_index]
+    
+    if A[row_index][row_index] == 0:
+        print(f"A[{row_index}][{row_index}] is zero.")
+        x_solution[row_index] = 0
+    else:
+        x_solution[row_index] = (rhs_vector[row_index] - sum_ax) / A[row_index][row_index]
+
+print("backward substitution:", x_solution)
