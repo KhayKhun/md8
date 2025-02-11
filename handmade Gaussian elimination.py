@@ -1,7 +1,7 @@
 import random
 
 # Step 0: Generate system
-N = 3
+N = 5
 A = []
 for _ in range(N):
     row = [random.randint(1, 5) for _ in range(N)]
@@ -61,3 +61,22 @@ for row_index in reversed(range(N)):
         x_solution[row_index] = (rhs_vector[row_index] - sum_ax) / A[row_index][row_index]
 
 print("backward substitution:", x_solution)
+
+# Step 4: Testing
+print("--- Testing ---")
+
+diff = [abs(known_sol[idx] - x_solution[idx]) for idx in range(N)]
+print("Computed solution:     ", x_solution)
+print("Known solution:", known_sol)
+print("Difference:  ", diff)
+
+# compute residual r = A*x_solution - b
+Ax = []
+for i in range(N):
+    row_val = 0
+    for j in range(N):
+        row_val += A[i][j] * x_solution[j]
+    Ax.append(row_val)
+
+r = [Ax[i] - rhs_vector[i] for i in range(N)]
+print("residual:", r)
