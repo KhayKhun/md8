@@ -1,82 +1,116 @@
 import random
+import copy
 
-# Step 0: Generate system
-N = 5
-A = []
-for _ in range(N):
-    row = [random.randint(1, 5) for _ in range(N)]
-    A.append(row)
+# Generators
+def generate_random_matrix(N):
+    A = []
+    for _ in range(N):
+        row = [random.randint(1, 5) for _ in range(N)]
+        A.append(row)
+    return A
 
-known_sol = [i + 1 for i in range(N)]
+def generate_hilbert_matrix(N):
+    H = []
+    for i in range(N):
+        row = []
+        for j in range(N):
+            row.append(1.0 / (i + j + 1))
+        H.append(row)
+    return H
 
-rhs_vector = []
-for i in range(N):
-    row_sum = 0
-    for j in range(N):
-        row_sum += A[i][j] * known_sol[j]
-    rhs_vector.append(row_sum)
+def generate_rhs(A, known_sol):
+    N = len(A)
+    b = []
+    for i in range(N):
+        total = 0.0
+        for j in range(N):
+            total += A[i][j] * known_sol[j]
+        b.append(total)
+    return b
 
-print("Initial matrix A:")
-for row in A:
-    print(row)
-print("Initial RHS vector b:", rhs_vector)
+def forward_elimination(A, b):
+    N = len(A)
+    for pivot_idx in range(N):
+        if A[pivot_idx][pivot_idx] == 0:
+            for swap_idx in range(pivot_idx+1, N):
+                if A[swap_idx][pivot_idx] != 0:
+                    A[pivot_idx], A[swap_idx] = A[swap_idx], A[pivot_idx]
+                    b[pivot_idx], b[swap_idx] = b[swap_idx], b[pivot_idx]
+                    break
+        
+        pivot = A[pivot_idx][pivot_idx]
+        if pivot == 0:
+            continue
+        
+        # eliminate below pivot
+        for row_below in range(pivot_idx+1, N):
+            factor = A[row_below][pivot_idx] / pivot
+            for col_below in range(pivot_idx, N):
+                A[row_below][col_below] -= factor * A[pivot_idx][col_below]
+            b[row_below] -= factor * b[pivot_idx]
 
-# Step 1: elimination
-for k in range(N):
-    if A[k][k] == 0:
-        for r in range(k + 1, N):
-            if A[r][k] != 0:
-                # swap entire rows in A
-                A[k], A[r] = A[r], A[k]
-                # swap corresponding entries in b
-                rhs_vector[k], rhs_vector[r] = rhs_vector[r], rhs_vector[k]
-                break
+def backward_substitution(A, b):
+    N = len(A)
+    x = [0] * N
+    for row_idx in reversed(range(N)):
+        sum_ax = 0.0
+        for col_idx in range(row_idx+1, N):
+            sum_ax += A[row_idx][col_idx] * x[col_idx]
+        
+        if A[row_idx][row_idx] == 0:
+            x[row_idx] = 0.0
+        else:
+            x[row_idx] = (b[row_idx] - sum_ax) / A[row_idx][row_idx]
+    return x
+
+def test_solution(A_original, x_solution, b_original, known_solution):
+    N = len(A_original)
+    diffs = [abs(x_solution[i] - known_solution[i]) for i in range(N)]
+    Ax = []
+    for i in range(N):
+        row_val = 0.0
+        for j in range(N):
+            row_val += A_original[i][j] * x_solution[j]
+        Ax.append(row_val)
+    residual = [Ax[i] - b_original[i] for i in range(N)]
     
-    pivot = A[k][k]
-    if pivot == 0:
-        continue
+    print("Computed solution:", x_solution)
+    print("Known solution:   ", known_solution)
+    print("Difference:       ", diffs)
+    print("Residual:         ", residual)
+
+def main(N):
+    known_sol = [float(i+1) for i in range(N)]
     
-    for i in range(k+1, N):
-        factor = A[i][k] / pivot
-        for j in range(k, N):
-            A[i][j] = A[i][j] - factor * A[k][j]
-        rhs_vector[i] -= factor * rhs_vector[k]
+    print(f"\nN = {N}\n")
+
+    # random matrix
+    A_rand = generate_random_matrix(N)
+    rhs_rand = generate_rhs(A_rand, known_sol)
     
-    print(f"\nAfter eliminating column {k}:")
-    for row in A:
-        print([x for x in row])
-    print("rhs:", [x for x in rhs_vector])
-
-# Step 3: backward substitution
-x_solution = [0 for _ in range(N)]
-for row_index in reversed(range(N)):
-    sum_ax = 0
-    for col_index in range(row_index + 1, N):
-        sum_ax += A[row_index][col_index] * x_solution[col_index]
+    # copy of originals for later usage
+    A_rand_copy = copy.deepcopy(A_rand)
+    b_rand_copy = copy.deepcopy(rhs_rand)
     
-    if A[row_index][row_index] == 0:
-        print(f"A[{row_index}][{row_index}] is zero.")
-        x_solution[row_index] = 0
-    else:
-        x_solution[row_index] = (rhs_vector[row_index] - sum_ax) / A[row_index][row_index]
+    forward_elimination(A_rand_copy, b_rand_copy)
+    sol_rand = backward_substitution(A_rand_copy, b_rand_copy)
+    
+    print("Random Matrix---")
+    test_solution(A_rand, sol_rand, rhs_rand, known_sol)
+    
+    # 2) Hilbert matrix
+    A_hilbert = generate_hilbert_matrix(N)
+    b_hilbert = generate_rhs(A_hilbert, known_sol)
+    
+    A_hilbert_copy = copy.deepcopy(A_hilbert)
+    b_hilbert_copy = copy.deepcopy(b_hilbert)
+    
+    forward_elimination(A_hilbert_copy, b_hilbert_copy)
+    sol_hilbert = backward_substitution(A_hilbert_copy, b_hilbert_copy)
+    
+    print("Hilbert Matrix---")
+    test_solution(A_hilbert, sol_hilbert, b_hilbert, known_sol)
 
-print("backward substitution:", x_solution)
-
-# Step 4: Testing
-print("--- Testing ---")
-
-diff = [abs(known_sol[idx] - x_solution[idx]) for idx in range(N)]
-print("Computed solution:     ", x_solution)
-print("Known solution:", known_sol)
-print("Difference:  ", diff)
-
-# compute residual r = A*x_solution - b
-Ax = []
-for i in range(N):
-    row_val = 0
-    for j in range(N):
-        row_val += A[i][j] * x_solution[j]
-    Ax.append(row_val)
-
-r = [Ax[i] - rhs_vector[i] for i in range(N)]
-print("residual:", r)
+# Step 5: test diff N
+for size in [3,5]:
+    main(size)
