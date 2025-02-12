@@ -1,13 +1,13 @@
 import random
 
-def isDDM(A):
+def isSDDM(A):
     N = len(A)
     for i in range(N):
         row_sum = 0
         for j in range(N):
             row_sum += abs(A[i][j])
         row_sum -= abs(A[i][i])
-        if abs(A[i][i]) < row_sum:
+        if abs(A[i][i]) <= row_sum:
             return False
     return True
 
@@ -27,37 +27,35 @@ def generate_rhs(A, known_sol):
             total += A[i][j] * known_sol[j]
         b.append(total)
     return b
-    
-def jacobi_iteration(A, b, initial_guess):
+
+N = 3
+
+def gauss_seidel(A, b, initial_guess):
+
+    current_guess = initial_guess[:]  # Make a copy so we don't modify the original guess
     N = len(A)
-    current_guess = initial_guess[:]  # copy of previous X
-    for iteration in range(10):
-        new_x = [0] * N
 
-        for i in range(N): # i for row
-            # Compute the part of A[i][*] * current_guess excluding j = i (row index == col index)
-
-            total = 0 # total except diagonal ones
+    for k in range(10):
+        for i in range(N):
+            # sum up A[i][j]*current_guess[j] for j != i,
+            # but note that some current_guess[j] may already be updated in this iteration!
+            total = 0
             for j in range(N):
                 if j != i:
                     total += A[i][j] * current_guess[j]
-            new_x[i] = (b[i] - total) / A[i][i]
+            
+            # Update current_guess[i] using the newly updated values for j < i
+            current_guess[i] = (b[i] - total) / A[i][i]
 
-        diff = max(abs(new_x[i] - current_guess[i]) for i in range(N))
-        print(f"Iteration {iteration}, current_guess = {new_x}, diff = {diff}")
-
-        if diff < 1e-6: return new_x
-
-        current_guess = new_x
+        # (Optional) print or store the intermediate result
+        print(f"Iteration {k+1}: {current_guess}")
 
     return current_guess
-
-N = 3
 
 A = []
 while True:
     a = generate_matrix(N)
-    if isDDM(a):
+    if isSDDM(a):
         A = a
         break
 
@@ -72,6 +70,6 @@ initial_guess = [ known_sol[i] + random.uniform(-0.5, 0.5) for i in range(N) ]
 print("init guess:", initial_guess)
 print()
 
-res = jacobi_iteration(A, b, initial_guess)
+res = gauss_seidel(A, b, initial_guess)
 
 print(res, known_sol)
